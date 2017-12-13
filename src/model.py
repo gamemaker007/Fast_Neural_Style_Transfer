@@ -55,7 +55,9 @@ class ImageTransformationNetwork(nn.Module):
 		self.conv6 = nn.Conv2d(32, 3, kernel_size=9, stride=1, padding=4)
 		self.bn6 = nn.InstanceNorm2d(3)
 		self.tanh = nn.Tanh()
-		self.relu = nn.ReLU(inplace=True)
+		self.relu = nn.ReLU()
+		self.init_weights()
+		
 
 	def forward(self,x):
 		out = self.relu(self.bn1(self.conv1(x)))
@@ -69,16 +71,20 @@ class ImageTransformationNetwork(nn.Module):
 		out = self.relu(self.bn4(self.conv4(out, output_size=(self.img_size//2,self.img_size//2))))
 		out = self.relu(self.bn5(self.conv5(out, output_size=(self.img_size,self.img_size))))
 		out = self.tanh(self.bn6(self.conv6(out)))
-		# out.data[:,0,:,:].add_(1).div_(2).mul_(255)
-		# out.data[:,1,:,:].add_(1).div_(2).mul_(255)
-		# out.data[:,2,:,:].add_(1).div_(2).mul_(255) 
 		out = torch.add(out,1)
 		out = torch.div(out,2)
 		out = torch.mul(out,255)
 		
 		return out
 
+	def init_weights(self):
+		initrange = 0.1
+		lin_layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.conv5, self.conv6]
 
+		for layer in lin_layers:
+			layer.weight.data.uniform_(-initrange, initrange)
+			layer.bias.data.fill_(0)
+			
 class TrainDataset(Dataset):
 	"""Dataset wrapping data and target tensors.
 
